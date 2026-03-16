@@ -105,12 +105,7 @@ body {
 .ip-item:active {
     transform: scale(0.985);
 }
-.btns {
-    display: flex;
-    gap: 12px;
-}
 .btn {
-    flex: 1;
     padding: 14px 20px;
     border-radius: 14px;
     border: none;
@@ -157,7 +152,7 @@ body {
 
 <div class="header">
     <h1>🌍 Cloudflare 优选 IP 列表</h1>
-    <p>点击IP即可复制 · 干净美观</p>
+    <p>点击IP即可复制 · 自动拆分IP/地区/速度</p>
 </div>
 
 <div class="card">
@@ -194,11 +189,15 @@ async function loadIPs() {
         const lines = text.split("\n").filter(i => i.trim());
 
         ipData = lines.map(line => {
-            const parts = line.trim().split(/\s+/);
+            // 拆分格式：IP#地区-速度
+            const [ipPart, rest] = line.split("#");
+            if (!rest) return { ip: ipPart, area: "-", speed: "-" };
+            
+            const [area, speed] = rest.split("-");
             return {
-                ip: parts[0] || "",
-                area: parts[1] || "-",
-                speed: parts[2] || "-"
+                ip: ipPart || "-",
+                area: area || "-",
+                speed: speed || "-"
             };
         });
 
