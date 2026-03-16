@@ -1,20 +1,210 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cloudflare IP</title>
+<title>Cloudflare 优选 IP</title>
+<link rel="icon" href="https://cloudflare.com/favicon.ico">
 <style>
-    body{background:#fff;color:#333;font-family:monospace;line-height:1.6;padding:20px;}
-    pre{white-space:pre-wrap;word-wrap:break-word;}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+:root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #1e293b;
+    --gray: #64748b;
+    --primary: #4f46e5;
+    --success: #10b981;
+    --danger: #ef4444;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --text: #f1f5f9;
+        --gray: #94a3b8;
+    }
+}
+body {
+    background: var(--bg);
+    color: var(--text);
+    padding: 30px 20px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.header h1 {
+    font-size: 26px;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+.header p {
+    color: var(--gray);
+    font-size: 14px;
+}
+.card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+.ip-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+.ip-item {
+    background: var(--bg);
+    padding: 12px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: monospace;
+    font-size: 14px;
+}
+.ip-item .ping {
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(79, 70, 229, 0.1);
+    color: var(--primary);
+}
+.ip-item .ping.fast {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+.ip-item .ping.slow {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+.btn {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: 0.2s;
+}
+.btn:hover {
+    opacity: 0.9;
+}
+.status {
+    font-size: 13px;
+    color: var(--gray);
+    margin-top: 10px;
+}
+.loading {
+    text-align: center;
+    padding: 30px 0;
+    color: var(--gray);
+}
 </style>
 </head>
 <body>
-<pre id="ipList">Loading...</pre>
+
+<div class="header">
+    <h1>🌍 Cloudflare 优选 IP 列表</h1>
+    <p>自动更新 | 实时测速 | 干净无广告</p>
+</div>
+
+<div class="card">
+    <div id="status" class="status">⏳ 加载中...</div>
+    <div id="ipList" class="ip-container">
+        <div class="loading">正在获取最新 IP...</div>
+    </div>
+    <button class="btn" onclick="copyAllIPs()">📋 一键复制全部 IP</button>
+</div>
 
 <script>
-// 每天 03:10 自动更新
-function autoUpdateAt310() {
+const IP_FILE = "https://raw.githubusercontent.com/hadis112233/CF-DNS/main/cloudflare_ips.txt";
+let ipList = [];
+
+// 加载 IP
+async function loadIPs() {
+    const status = document.getElementById("status");
+    const container = document.getElementById("ipList");
+    status.innerText = "🔄 更新中...";
+    
+    try {
+        const res = await fetch(IP_FILE, { cache: "no-store" });
+        let text = await res.text();
+        text = text.replace(/:443/g, "").trim();
+        ipList = text.split(/\n/).filter(i => i.trim());
+        
+        renderIPs();
+        startPingTest();
+        
+        const time = new Date().toLocaleString();
+        status.innerText = `✅ 最后更新：${time}`;
+    } catch (e) {
+        container.innerHTML = `<div class="loading">❌ 加载失败</div>`;
+        status.innerText = "❌ 更新失败";
+    }
+}
+
+// 渲染
+function renderIPs() {
+    const container = document.getElementById("ipList");
+    container.innerHTML = "";
+    ipList.forEach(ip => {
+        const div = document.createElement("div");
+        div.className = "ip-item";
+        div.innerHTML = `
+            <span>${ip}</span>
+            <span class="ping" data-ip="${ip}">测试中</span>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// 延迟测速
+async function pingTest(ip) {
+    return new Promise(resolve => {
+        const start = Date.now();
+        const img = new Image();
+        img.onload = () => resolve(Date.now() - start);
+        img.onerror = () => resolve(9999);
+        img.src = `https://${ip}/cdn-cgi/trace?${Math.random()}`;
+        setTimeout(() => resolve(9999), 3000);
+    });
+}
+
+// 批量测速
+async function startPingTest() {
+    const elements = document.querySelectorAll(".ping");
+    for (const el of elements) {
+        const ip = el.dataset.ip;
+        const time = await pingTest(ip);
+        el.innerText = time >= 9999 ? "超时" : time + "ms";
+        if (time < 200) el.classList.add("fast");
+        else if (time >= 9999) el.classList.add("slow");
+    }
+}
+
+// 一键复制
+function copyAllIPs() {
+    const text = ipList.join("\n");
+    navigator.clipboard.writeText(text).then(() => {
+        alert("✅ 复制成功！");
+    });
+}
+
+// 每日 03:10 自动更新
+function autoUpdate() {
     setInterval(() => {
         const now = new Date();
         if (now.getHours() === 3 && now.getMinutes() === 10) {
@@ -23,33 +213,9 @@ function autoUpdateAt310() {
     }, 60000);
 }
 
-// 加载 IP 列表
-async function loadIPs() {
-    try {
-        const res = await fetch("https://raw.githubusercontent.com/hadis112233/CF-DNS/main/cloudflare_ips.txt", { cache: "no-store" });
-        let text = await res.text();
-        text = text.replace(/:443/g, "").trim();
-        document.getElementById("ipList").innerText = text;
-    } catch (e) {
-        document.getElementById("ipList").innerText = "Load failed";
-    }
-}
-
-// 测速功能（保留！）
-async function testSpeed(ip) {
-    return new Promise((resolve) => {
-        const start = Date.now();
-        const img = new Image();
-        img.onload = () => resolve(Date.now() - start);
-        img.onerror = () => resolve(9999);
-        img.src = `https://speed.cloudflare.com/__down?bytes=10000&${Math.random()}`;
-        setTimeout(() => resolve(9999), 3000);
-    });
-}
-
-// 初始化
+// 启动
 loadIPs();
-autoUpdateAt310();
+autoUpdate();
 </script>
 </body>
 </html>
