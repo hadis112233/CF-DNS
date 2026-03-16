@@ -23,35 +23,35 @@
     --border: #e2e8f0;
     --shadow: 0 12px 40px rgba(0,0,0,0.08);
 }
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #0f172a;
-        --card: #1e293b;
-        --text: #f1f5f9;
-        --gray: #94a3b8;
-        --hover: #273449;
-        --border: #334155;
-        --shadow: 0 12px 40px rgba(0,0,0,0.2);
-    }
+[data-theme="dark"] {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --text: #f1f5f9;
+    --gray: #94a3b8;
+    --hover: #273449;
+    --border: #334155;
+    --shadow: 0 12px 40px rgba(0,0,0,0.2);
 }
 body {
     background: var(--bg);
     color: var(--text);
-    padding: 50px 20px;
+    padding: 30px 15px;
     max-width: 1000px;
     margin: 0 auto;
     line-height: 1.6;
     min-height: 100vh;
+    transition: background 0.3s ease, color 0.3s ease;
 }
-/* 头部美化 */
+/* 头部 */
 .header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
     animation: fadeIn 0.6s ease forwards;
+    position: relative;
 }
 .header h1 {
-    font-size: 34px;
-    margin-bottom: 12px;
+    font-size: 26px;
+    margin-bottom: 10px;
     font-weight: 800;
     background: linear-gradient(90deg, #4f46e5, #8b5cf6);
     -webkit-background-clip: text;
@@ -59,140 +59,189 @@ body {
 }
 .header p {
     color: var(--gray);
-    font-size: 16px;
-    opacity: 0.9;
+    font-size: 14px;
 }
-/* 卡片美化 */
+/* 深色模式开关 */
+.theme-switch {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50px;
+    height: 26px;
+    border-radius: 99px;
+    background: var(--gray);
+    cursor: pointer;
+    border: none;
+    position: relative;
+    transition: background 0.3s ease;
+}
+.theme-switch::after {
+    content: "🌞";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    line-height: 20px;
+}
+[data-theme="dark"] .theme-switch {
+    background: var(--primary);
+}
+[data-theme="dark"] .theme-switch::after {
+    content: "🌙";
+    transform: translateX(24px);
+}
+/* 卡片 */
 .card {
     background: var(--card);
-    border-radius: 24px;
-    padding: 36px;
+    border-radius: 20px;
+    padding: 24px 20px;
     box-shadow: var(--shadow);
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     border: 1px solid var(--border);
     animation: fadeIn 0.7s ease forwards;
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 .status {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--gray);
-    margin-bottom: 24px;
-    padding-bottom: 18px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    transition: border-color 0.3s ease;
 }
-/* 统一网格布局（修复对齐核心） */
+
+/* 核心：对齐 + 自适应 */
 .table-head, .ip-item {
     display: grid;
-    grid-template-columns: 36px 1.2fr 1fr 0.8fr;
-    gap: 16px;
+    grid-template-columns: 36px minmax(140px, 1fr) 80px 70px;
+    gap: 12px;
     align-items: center;
     padding: 0 12px;
+    width: 100%;
 }
-/* 表格头部 */
 .table-head {
     font-weight: 600;
     color: var(--primary);
-    padding-bottom: 16px;
-    font-size: 14px;
-    letter-spacing: 0.3px;
+    padding-bottom: 14px;
+    font-size: 13px;
+    text-align: left;
 }
-/* IP 列表 */
 .ip-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    max-height: 560px;
+    gap: 8px;
+    max-height: 520px;
     overflow-y: auto;
-    padding-right: 8px;
-    margin-bottom: 28px;
+    padding-right: 6px;
+    margin-bottom: 24px;
+    width: 100%;
 }
 .ip-item {
-    padding: 16px 20px;
+    padding: 14px 16px;
     background: var(--bg);
-    border-radius: 16px;
+    border-radius: 14px;
     font-family: 'SF Mono', Monaco, monospace;
-    font-size: 15px;
+    font-size: 13px;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.25s ease;
     user-select: none;
     border: 1px solid transparent;
+    white-space: nowrap;
+    overflow: hidden;
 }
 .ip-item:hover {
     background: var(--hover);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
     border-color: var(--primary);
-    box-shadow: 0 6px 16px rgba(79,70,229,0.1);
 }
-.ip-item:active {
-    transform: scale(0.98);
-}
+.ip-item:active { transform: scale(0.98); }
+
 /* 星级 */
 .star {
     color: #f59e0b;
     font-weight: bold;
-    font-size: 18px;
+    font-size: 16px;
     text-align: center;
 }
-.empty-star {
-    width: 36px;
-    height: 20px;
-}
+.empty-star { width: 36px; height: 18px; }
+
 /* 按钮 */
 .btn {
     width: 100%;
-    padding: 18px 24px;
-    border-radius: 16px;
+    padding: 16px 20px;
+    border-radius: 14px;
     border: none;
     background: linear-gradient(135deg, #4f46e5, #6366f1);
     color: white;
     font-weight: 600;
-    font-size: 16px;
+    font-size: 15px;
     cursor: pointer;
     transition: all 0.25s ease;
-    box-shadow: 0 6px 20px rgba(79,70,229,0.25);
 }
-.btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 28px rgba(79,70,229,0.35);
-}
-/* 加载 */
+.btn:hover { transform: translateY(-2px); }
+
 .loading {
     text-align: center;
-    padding: 60px 0;
+    padding: 50px 0;
     color: var(--gray);
-    font-size: 15px;
+    font-size: 14px;
 }
 /* 滚动条 */
-::-webkit-scrollbar {width: 6px;}
-::-webkit-scrollbar-track {background: transparent; border-radius: 10px;}
+::-webkit-scrollbar {width: 4px;}
+::-webkit-scrollbar-track {background: transparent;}
 ::-webkit-scrollbar-thumb {background: var(--gray); border-radius: 10px;}
-/* 提示框 */
+/* 提示 */
 .toast {
     position: fixed;
-    bottom: 40px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     background: var(--success);
     color: #fff;
-    padding: 14px 24px;
-    border-radius: 14px;
-    font-size: 15px;
-    font-weight: 500;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
     opacity: 0;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: 0.3s;
     pointer-events: none;
-    box-shadow: 0 8px 24px rgba(16,185,129,0.25);
+    white-space: nowrap;
 }
 .toast.show {
     opacity: 1;
-    transform: translate(-50%, -8px);
+    transform: translate(-50%, -6px);
 }
-/* 淡入动画 */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* 手机端适配 */
+@media (max-width: 480px) {
+    .table-head, .ip-item {
+        grid-template-columns: 32px minmax(120px, 1fr) 70px 60px;
+        gap: 8px;
+        padding: 0 8px;
+    }
+    .ip-item {
+        font-size: 12px;
+        padding: 12px 14px;
+    }
+    .table-head { font-size: 12px; }
+    .card { padding: 20px 16px; }
+    .theme-switch {
+        transform: scale(0.9);
+    }
 }
 </style>
 </head>
@@ -201,6 +250,7 @@ body {
 <div class="header">
     <h1>🌍 Cloudflare 优选 IP 列表</h1>
     <p>点击IP复制 · 自动拆分 · 速度排序 · 自动更新</p>
+    <button class="theme-switch" id="themeBtn"></button>
 </div>
 
 <div class="card">
@@ -227,6 +277,21 @@ const IP_FILE = "cloudflare_ips.txt";
 let ipData = [];
 let lastFileContent = "";
 
+// 深色模式开关
+const themeBtn = document.getElementById("themeBtn");
+function initTheme() {
+    const saved = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", saved);
+}
+themeBtn.onclick = () => {
+    const current = document.documentElement.getAttribute("data-theme");
+    const next = current === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+};
+initTheme();
+
+// 加载IP
 async function loadIPs() {
     const status = document.getElementById("status");
     const container = document.getElementById("ipList");
@@ -234,28 +299,34 @@ async function loadIPs() {
 
     try {
         const res = await fetch(IP_FILE, { cache: "no-store" });
+        if (!res.ok) throw new Error("请求失败");
         let text = await res.text();
         text = text.replace(/:443/g, "").trim();
-        
+
         if (lastFileContent && lastFileContent !== text) {
-            location.reload();
-            return;
+            lastFileContent = text;
+            renderList();
         }
         lastFileContent = text;
 
         const lines = text.split("\n").filter(i => i.trim());
+        if (lines.length === 0) {
+            container.innerHTML = `<div class="loading">暂无 IP 数据</div>`;
+            status.textContent = "✅ 数据为空";
+            ipData = [];
+            return;
+        }
+
         ipData = lines.map(line => {
-            const [ipPart, rest] = line.split("#");
-            if (!rest) return { ip: ipPart, area: "-", speed: "-", speedNum: 0 };
-            
-            const [area, speed] = rest.split("-");
-            const speedNum = parseFloat(speed) || 0;
-            return {
-                ip: ipPart || "-",
-                area: area || "-",
-                speed: speed || "-",
-                speedNum: speedNum
-            };
+            try {
+                const [ipPart, rest] = line.split("#");
+                if (!rest) return { ip: ipPart.trim(), area: "-", speed: "-", speedNum: 0 };
+                const [area, speed] = rest.split("-").map(i => i.trim());
+                const speedNum = parseFloat(speed) || 0;
+                return { ip: ipPart.trim(), area, speed, speedNum };
+            } catch {
+                return { ip: line.trim(), area: "-", speed: "-", speedNum: 0 };
+            }
         });
 
         ipData.sort((a, b) => b.speedNum - a.speedNum);
@@ -267,51 +338,44 @@ async function loadIPs() {
     }
 }
 
+// 渲染列表
 function renderList() {
     const container = document.getElementById("ipList");
     container.innerHTML = "";
+    if (ipData.length === 0) {
+        container.innerHTML = `<div class="loading">暂无可用 IP</div>`;
+        return;
+    }
 
     ipData.forEach((item, index) => {
         const div = document.createElement("div");
         div.className = "ip-item";
-
-        let starHtml = '<div class="empty-star"></div>';
-        if (index === 0 || index === 1) {
-            starHtml = '<div class="star">★</div>';
-        }
-
-        div.innerHTML = `
-            ${starHtml}
-            <span>${item.ip}</span>
-            <span>${item.area}</span>
-            <span>${item.speed}</span>
-        `;
-
-        div.onclick = () => {
-            navigator.clipboard.writeText(item.ip).then(() => showToast());
-        };
+        let star = index < 2 ? '<div class="star">★</div>' : '<div class="empty-star"></div>';
+        
+        div.innerHTML = `${star}<span>${item.ip}</span><span>${item.area}</span><span>${item.speed}</span>`;
+        div.onclick = () => { navigator.clipboard.writeText(item.ip).then(() => showToast()); };
         container.appendChild(div);
     });
 }
 
+// 复制全部
 function copyAll() {
+    if (ipData.length === 0) return showToast("❌ 无数据可复制");
     const text = ipData.map(i => `${i.ip}#${i.area}-${i.speed}`).join("\n");
     navigator.clipboard.writeText(text).then(() => showToast("✅ 全部复制成功"));
 }
 
+// 提示
 function showToast(msg = "✅ IP 复制成功") {
     const t = document.getElementById("toast");
     t.textContent = msg;
     t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 1500);
+    setTimeout(() => t.classList.remove("show"), 1800);
 }
 
-function autoCheckUpdate() {
-    setInterval(() => loadIPs(), 10000);
-}
-
+// 自动刷新
+setInterval(loadIPs, 30000);
 loadIPs();
-autoCheckUpdate();
 </script>
 </body>
 </html>
