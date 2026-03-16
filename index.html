@@ -111,10 +111,10 @@ body {
     gap: 6px;
 }
 
-/* 🔴 核心：彻底对齐，100% 不偏移 */
+/* ====================== 已调整：IP 标题右移 + 完美对齐 ====================== */
 .table-head, .ip-item {
     display: grid;
-    grid-template-columns: 36px 1fr 100px 80px;
+    grid-template-columns: 50px 1fr 100px 80px;
     gap: 16px;
     align-items: center;
     padding: 0 16px;
@@ -158,8 +158,12 @@ body {
     font-weight: bold;
     font-size: 16px;
     text-align: center;
+    width: 50px;
 }
-.empty-star { width: 36px; height: 18px; }
+.empty-star {
+    width: 50px;
+    height: 18px;
+}
 
 .btn {
     width: 100%;
@@ -207,7 +211,7 @@ body {
 /* 手机端 */
 @media (max-width: 480px) {
     .table-head, .ip-item {
-        grid-template-columns: 32px 1fr 80px 70px;
+        grid-template-columns: 40px 1fr 80px 70px;
         gap: 8px;
         padding: 0 12px;
     }
