@@ -105,6 +105,19 @@ body {
 .ip-item:active {
     transform: scale(0.985);
 }
+/* 金牌IP样式 */
+.ip-item.top1 {
+    border: 1px solid #f59e0b;
+    background: rgba(245, 158, 11, 0.08);
+}
+.ip-item.top2 {
+    border: 1px solid #6366f1;
+    background: rgba(99, 102, 241, 0.08);
+}
+.star {
+    color: #f59e0b;
+    font-weight: bold;
+}
 .btn {
     padding: 14px 20px;
     border-radius: 14px;
@@ -152,7 +165,7 @@ body {
 
 <div class="header">
     <h1>🌍 Cloudflare 优选 IP 列表</h1>
-    <p>点击IP即可复制 · 自动拆分IP/地区/速度</p>
+    <p>点击IP复制 · 自动拆分 · 速度从高到低排序</p>
 </div>
 
 <div class="card">
@@ -189,17 +202,21 @@ async function loadIPs() {
         const lines = text.split("\n").filter(i => i.trim());
 
         ipData = lines.map(line => {
-            // 拆分格式：IP#地区-速度
             const [ipPart, rest] = line.split("#");
-            if (!rest) return { ip: ipPart, area: "-", speed: "-" };
+            if (!rest) return { ip: ipPart, area: "-", speed: "-", speedNum: 0 };
             
             const [area, speed] = rest.split("-");
+            const speedNum = parseFloat(speed) || 0;
             return {
                 ip: ipPart || "-",
                 area: area || "-",
-                speed: speed || "-"
+                speed: speed || "-",
+                speedNum: speedNum
             };
         });
+
+        // 按速度从高到低排序
+        ipData.sort((a, b) => b.speedNum - a.speedNum);
 
         renderList();
         status.textContent = `✅ 最后更新：${new Date().toLocaleString()}`;
@@ -213,12 +230,22 @@ function renderList() {
     const container = document.getElementById("ipList");
     container.innerHTML = "";
 
-    ipData.forEach(item => {
+    ipData.forEach((item, index) => {
         const div = document.createElement("div");
         div.className = "ip-item";
         
+        // 前2个速度最高的加★
+        let ipText = item.ip;
+        if (index === 0) {
+            div.classList.add("top1");
+            ipText = `<span class="star">★</span> ${ipText}`;
+        } else if (index === 1) {
+            div.classList.add("top2");
+            ipText = `<span class="star">★</span> ${ipText}`;
+        }
+
         div.innerHTML = `
-            <span>${item.ip}</span>
+            <span>${ipText}</span>
             <span>${item.area}</span>
             <span>${item.speed}</span>
         `;
@@ -231,7 +258,7 @@ function renderList() {
 }
 
 function copyAll() {
-    const text = ipData.map(i => `${i.ip} ${i.area} ${i.speed}`).join("\n");
+    const text = ipData.map(i => `${i.ip}#${i.area}-${i.speed}`).join("\n");
     navigator.clipboard.writeText(text).then(() => showToast("✅ 全部复制成功"));
 }
 
