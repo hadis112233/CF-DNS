@@ -9,7 +9,7 @@ on:
     paths:
       - 'cloudflare_ips.txt'  # 文件更新就触发
   schedule:
-    - cron: '5 */6 * * *'     # 保留每6小时一次
+    - cron: '0 */6 * * *'     # 保留每6小时一次
   workflow_dispatch:          # 保留手动运行
 
 jobs:
