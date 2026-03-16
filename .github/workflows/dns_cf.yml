@@ -3,10 +3,14 @@ name: 'dns_cf_push'
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+# 👇 这里是关键：添加 push 触发，只监听 cloudflare_ips.txt
 on:
+  push:
+    paths:
+      - 'cloudflare_ips.txt'  # 文件更新就触发
   schedule:
-    - cron: '5 */6 * * *'
-  workflow_dispatch:
+    - cron: '5 */6 * * *'     # 保留每6小时一次
+  workflow_dispatch:          # 保留手动运行
 
 jobs:
   build:
@@ -14,12 +18,15 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+
       - name: 'Set up Python'
         uses: actions/setup-python@v5
         with:
           python-version: 3.12
+
       - name: 'Install dependencies'
         run: if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
       - name: 'run dnscf'
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
