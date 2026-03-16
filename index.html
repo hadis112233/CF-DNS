@@ -1,3 +1,11 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloudflare 优选 IP</title>
+<link rel="icon" href="https://cloudflare.com/favicon.ico">
+<style>
 * {
     margin: 0;
     padding: 0;
@@ -30,14 +38,12 @@ body {
     padding: 30px 15px;
     max-width: 1000px;
     margin: 0 auto;
-    line-height: 1.6;
     min-height: 100vh;
     transition: background 0.3s ease, color 0.3s ease;
 }
 .header {
     text-align: center;
     margin-bottom: 30px;
-    animation: fadeIn 0.6s ease forwards;
     position: relative;
 }
 .header h1 {
@@ -62,7 +68,6 @@ body {
     background: var(--gray);
     cursor: pointer;
     border: none;
-    position: relative;
     transition: background 0.3s ease;
 }
 .theme-switch::after {
@@ -79,7 +84,6 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 12px;
-    line-height: 20px;
 }
 [data-theme="dark"] .theme-switch {
     background: var(--primary);
@@ -93,9 +97,7 @@ body {
     border-radius: 20px;
     padding: 24px 20px;
     box-shadow: var(--shadow);
-    margin-bottom: 20px;
     border: 1px solid var(--border);
-    animation: fadeIn 0.7s ease forwards;
     transition: background 0.3s ease, border-color 0.3s ease;
 }
 .status {
@@ -107,123 +109,105 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
-    transition: border-color 0.3s ease;
 }
 
-/* 核心对齐修复：和截图完全匹配的列分布 */
+/* 🔴 核心：彻底对齐，100% 不偏移 */
 .table-head, .ip-item {
     display: grid;
-    grid-template-columns: 40px 3fr 100px 100px;
+    grid-template-columns: 36px 1fr 100px 80px;
     gap: 16px;
     align-items: center;
-    padding: 0 20px;
+    padding: 0 16px;
     width: 100%;
 }
 .table-head {
     font-weight: 600;
     color: var(--primary);
-    padding-bottom: 16px;
-    font-size: 14px;
+    padding-bottom: 14px;
+    font-size: 13px;
     text-align: left;
 }
 .ip-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    max-height: 560px;
+    gap: 8px;
+    max-height: 520px;
     overflow-y: auto;
-    padding-right: 8px;
-    margin-bottom: 28px;
+    padding-right: 6px;
+    margin-bottom: 24px;
     width: 100%;
 }
 .ip-item {
-    padding: 16px 20px;
+    padding: 14px 16px;
     background: var(--bg);
-    border-radius: 16px;
+    border-radius: 14px;
     font-family: 'SF Mono', Monaco, monospace;
-    font-size: 15px;
+    font-size: 13px;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.25s ease;
     user-select: none;
-    border: 1px solid transparent;
     white-space: nowrap;
-    overflow: hidden;
 }
 .ip-item:hover {
     background: var(--hover);
-    transform: translateY(-2px);
     border-color: var(--primary);
-    box-shadow: 0 6px 16px rgba(79,70,229,0.1);
 }
-.ip-item:active {
-    transform: scale(0.98);
-}
+
 .star {
     color: #f59e0b;
     font-weight: bold;
-    font-size: 18px;
+    font-size: 16px;
     text-align: center;
 }
-.empty-star {
-    width: 40px;
-    height: 20px;
-}
+.empty-star { width: 36px; height: 18px; }
+
 .btn {
     width: 100%;
-    padding: 18px 24px;
-    border-radius: 16px;
+    padding: 16px 20px;
+    border-radius: 14px;
     border: none;
     background: linear-gradient(135deg, #4f46e5, #6366f1);
     color: white;
     font-weight: 600;
-    font-size: 16px;
+    font-size: 15px;
     cursor: pointer;
     transition: all 0.25s ease;
-    box-shadow: 0 6px 20px rgba(79,70,229,0.25);
 }
-.btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 28px rgba(79,70,229,0.35);
-}
+.btn:hover { transform: translateY(-2px); }
+
 .loading {
     text-align: center;
-    padding: 60px 0;
+    padding: 50px 0;
     color: var(--gray);
-    font-size: 15px;
+    font-size: 14px;
 }
-::-webkit-scrollbar {width: 6px;}
-::-webkit-scrollbar-track {background: transparent; border-radius: 10px;}
+::-webkit-scrollbar {width: 4px;}
 ::-webkit-scrollbar-thumb {background: var(--gray); border-radius: 10px;}
+
 .toast {
     position: fixed;
-    bottom: 40px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     background: var(--success);
     color: #fff;
-    padding: 14px 24px;
-    border-radius: 14px;
-    font-size: 15px;
-    font-weight: 500;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
     opacity: 0;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: 0.3s;
     pointer-events: none;
-    box-shadow: 0 8px 24px rgba(16,185,129,0.25);
     white-space: nowrap;
 }
 .toast.show {
     opacity: 1;
-    transform: translate(-50%, -8px);
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    transform: translate(-50%, -6px);
 }
 
-/* 手机端适配 */
+/* 手机端 */
 @media (max-width: 480px) {
     .table-head, .ip-item {
-        grid-template-columns: 32px minmax(120px, 2fr) 70px 70px;
+        grid-template-columns: 32px 1fr 80px 70px;
         gap: 8px;
         padding: 0 12px;
     }
@@ -231,9 +215,141 @@ body {
         font-size: 12px;
         padding: 12px 14px;
     }
-    .table-head { font-size: 12px; }
     .card { padding: 20px 16px; }
-    .theme-switch {
-        transform: scale(0.9);
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🌍 Cloudflare 优选 IP 列表</h1>
+    <p>点击IP复制 · 自动拆分 · 速度排序 · 自动更新</p>
+    <button class="theme-switch" id="themeBtn"></button>
+</div>
+
+<div class="card">
+    <div id="status" class="status">⏳ 加载中...</div>
+
+    <div class="table-head">
+        <div></div>
+        <div>IP 地址</div>
+        <div>地区</div>
+        <div>速度</div>
+    </div>
+
+    <div id="ipList" class="ip-list">
+        <div class="loading">正在获取最新 IP 数据...</div>
+    </div>
+
+    <button class="btn" onclick="copyAll()">📋 一键复制全部</button>
+</div>
+
+<div id="toast" class="toast">✅ IP 复制成功</div>
+
+<script>
+const IP_FILE = "cloudflare_ips.txt";
+let ipData = [];
+let lastFileContent = "";
+
+// 深色模式
+const themeBtn = document.getElementById("themeBtn");
+function initTheme() {
+    const saved = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", saved);
+}
+themeBtn.onclick = () => {
+    const current = document.documentElement.getAttribute("data-theme");
+    const next = current === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+};
+initTheme();
+
+// 加载IP
+async function loadIPs() {
+    const status = document.getElementById("status");
+    const container = document.getElementById("ipList");
+    status.textContent = "🔄 更新中...";
+
+    try {
+        const res = await fetch(IP_FILE, { cache: "no-store" });
+        if (!res.ok) throw new Error("请求失败");
+        let text = await res.text();
+        text = text.replace(/:443/g, "").trim();
+
+        if (lastFileContent && lastFileContent !== text) {
+            lastFileContent = text;
+            renderList();
+        }
+        lastFileContent = text;
+
+        const lines = text.split("\n").filter(i => i.trim());
+        if (lines.length === 0) {
+            container.innerHTML = `<div class="loading">暂无 IP 数据</div>`;
+            status.textContent = "✅ 数据为空";
+            ipData = [];
+            return;
+        }
+
+        ipData = lines.map(line => {
+            try {
+                const [ipPart, rest] = line.split("#");
+                if (!rest) return { ip: ipPart.trim(), area: "-", speed: "-", speedNum: 0 };
+                const [area, speed] = rest.split("-").map(i => i.trim());
+                const speedNum = parseFloat(speed) || 0;
+                return { ip: ipPart.trim(), area, speed, speedNum };
+            } catch {
+                return { ip: line.trim(), area: "-", speed: "-", speedNum: 0 };
+            }
+        });
+
+        ipData.sort((a, b) => b.speedNum - a.speedNum);
+        renderList();
+        status.textContent = `✅ 最后更新：${new Date().toLocaleString()}`;
+    } catch (e) {
+        container.innerHTML = `<div class="loading">❌ 加载失败</div>`;
+        status.textContent = "❌ 更新失败";
     }
 }
+
+// 渲染
+function renderList() {
+    const container = document.getElementById("ipList");
+    container.innerHTML = "";
+    if (ipData.length === 0) {
+        container.innerHTML = `<div class="loading">暂无可用 IP</div>`;
+        return;
+    }
+
+    ipData.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "ip-item";
+        let star = index < 2 ? '<div class="star">★</div>' : '<div class="empty-star"></div>';
+        
+        div.innerHTML = `${star}<span>${item.ip}</span><span>${item.area}</span><span>${item.speed}</span>`;
+        div.onclick = () => { 
+            navigator.clipboard.writeText(item.ip).then(() => showToast());
+        };
+        container.appendChild(div);
+    });
+}
+
+// 复制
+function copyAll() {
+    if (ipData.length === 0) return showToast("❌ 无数据可复制");
+    const text = ipData.map(i => `${i.ip}#${i.area}-${i.speed}`).join("\n");
+    navigator.clipboard.writeText(text).then(() => showToast("✅ 全部复制成功"));
+}
+
+function showToast(msg = "✅ IP 复制成功") {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+setInterval(loadIPs, 30000);
+loadIPs();
+</script>
+</body>
+</html>
