@@ -16,7 +16,7 @@ HEADERS = {
 }
 
 # 本地 IP 文件路径（你自己放仓库里）
-IP_FILE_PATH = "ips.txt"
+IP_FILE_PATH = "cloudflare_ips.txt"
 
 # 匹配 IPv4
 IP_REGEX = re.compile(r'^\d+\.\d+\.\d+\.\d+$')
