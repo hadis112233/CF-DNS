@@ -105,7 +105,6 @@ body {
 .ip-item:active {
     transform: scale(0.985);
 }
-/* 金牌IP样式 */
 .ip-item.top1 {
     border: 1px solid #f59e0b;
     background: rgba(245, 158, 11, 0.08);
@@ -165,7 +164,7 @@ body {
 
 <div class="header">
     <h1>🌍 Cloudflare 优选 IP 列表</h1>
-    <p>点击IP复制 · 自动拆分 · 速度从高到低排序</p>
+    <p>点击IP复制 · 自动拆分 · 速度排序 · 自动更新</p>
 </div>
 
 <div class="card">
@@ -187,9 +186,11 @@ body {
 <div id="toast" class="toast">✅ IP 复制成功</div>
 
 <script>
-const IP_FILE = "https://raw.githubusercontent.com/hadis112233/CF-DNS/main/cloudflare_ips.txt";
+const IP_FILE = "cloudflare_ips.txt";
 let ipData = [];
+let lastFileContent = "";
 
+// 主加载函数
 async function loadIPs() {
     const status = document.getElementById("status");
     const container = document.getElementById("ipList");
@@ -199,8 +200,16 @@ async function loadIPs() {
         const res = await fetch(IP_FILE, { cache: "no-store" });
         let text = await res.text();
         text = text.replace(/:443/g, "").trim();
-        const lines = text.split("\n").filter(i => i.trim());
+        
+        // 检测文件是否更新
+        if (lastFileContent && lastFileContent !== text) {
+            console.log("检测到文件更新，自动刷新数据");
+            location.reload();
+            return;
+        }
+        lastFileContent = text;
 
+        const lines = text.split("\n").filter(i => i.trim());
         ipData = lines.map(line => {
             const [ipPart, rest] = line.split("#");
             if (!rest) return { ip: ipPart, area: "-", speed: "-", speedNum: 0 };
@@ -215,9 +224,7 @@ async function loadIPs() {
             };
         });
 
-        // 按速度从高到低排序
         ipData.sort((a, b) => b.speedNum - a.speedNum);
-
         renderList();
         status.textContent = `✅ 最后更新：${new Date().toLocaleString()}`;
     } catch (e) {
@@ -226,6 +233,7 @@ async function loadIPs() {
     }
 }
 
+// 渲染列表
 function renderList() {
     const container = document.getElementById("ipList");
     container.innerHTML = "";
@@ -234,7 +242,6 @@ function renderList() {
         const div = document.createElement("div");
         div.className = "ip-item";
         
-        // 前2个速度最高的加★
         let ipText = item.ip;
         if (index === 0) {
             div.classList.add("top1");
@@ -257,11 +264,13 @@ function renderList() {
     });
 }
 
+// 一键复制
 function copyAll() {
     const text = ipData.map(i => `${i.ip}#${i.area}-${i.speed}`).join("\n");
     navigator.clipboard.writeText(text).then(() => showToast("✅ 全部复制成功"));
 }
 
+// 提示
 function showToast(msg = "✅ IP 复制成功") {
     const t = document.getElementById("toast");
     t.textContent = msg;
@@ -269,7 +278,16 @@ function showToast(msg = "✅ IP 复制成功") {
     setTimeout(() => t.classList.remove("show"), 1300);
 }
 
+// 自动检测文件更新（每10秒检查一次）
+function autoCheckUpdate() {
+    setInterval(() => {
+        loadIPs();
+    }, 10000);
+}
+
+// 启动
 loadIPs();
+autoCheckUpdate();
 </script>
 </body>
 </html>
