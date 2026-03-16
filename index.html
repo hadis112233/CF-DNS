@@ -1,99 +1,55 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloudflare 优选 IP 列表</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        body {
-            background: #f6f8fa;
-            padding: 30px 20px;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .container {
-            background: white;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-        }
-        h1 {
-            font-size: 22px;
-            margin-bottom: 16px;
-            color: #24292f;
-        }
-        .ip-box {
-            background: #f6f8fa;
-            padding: 16px;
-            border-radius: 8px;
-            min-height: 200px;
-            white-space: pre-wrap;
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 14px;
-            line-height: 1.6;
-            color: #24292f;
-        }
-        .btn {
-            margin-top: 16px;
-            padding: 10px 16px;
-            background: #0969da;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .btn:hover {
-            background: #085fc7;
-        }
-        .tip {
-            margin-top: 12px;
-            font-size: 12px;
-            color: #656d76;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloudflare IP</title>
+<style>
+    body{background:#fff;color:#333;font-family:monospace;line-height:1.6;padding:20px;}
+    pre{white-space:pre-wrap;word-wrap:break-word;}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>Cloudflare 优选 IP 列表</h1>
-        <div id="ipList" class="ip-box">加载中...</div>
-        <button class="btn" onclick="copyIPs()">复制全部 IP</button>
-        <div class="tip">自动从源文件加载，支持一键复制 · 自动去掉 :443</div>
-    </div>
+<pre id="ipList">Loading...</pre>
 
-    <script>
-        // 加载 IP 文件
-        async function loadIPs() {
-            try {
-                const res = await fetch("https://raw.githubusercontent.com/hadis112233/CF-DNS/refs/heads/main/cloudflare_ips.txt");
-                let text = await res.text();
-                
-                // 自动去掉 :443
-                text = text.replace(/:443/g, '');
-                
-                document.getElementById("ipList").innerText = text;
-            } catch (e) {
-                document.getElementById("ipList").innerText = "加载失败，请刷新重试";
-            }
+<script>
+// 每天 03:10 自动更新
+function autoUpdateAt310() {
+    setInterval(() => {
+        const now = new Date();
+        if (now.getHours() === 3 && now.getMinutes() === 10) {
+            loadIPs();
         }
+    }, 60000);
+}
 
-        // 复制功能
-        function copyIPs() {
-            const content = document.getElementById("ipList").innerText;
-            navigator.clipboard.writeText(content).then(() => {
-                alert("复制成功！");
-            });
-        }
+// 加载 IP 列表
+async function loadIPs() {
+    try {
+        const res = await fetch("https://raw.githubusercontent.com/hadis112233/CF-DNS/main/cloudflare_ips.txt", { cache: "no-store" });
+        let text = await res.text();
+        text = text.replace(/:443/g, "").trim();
+        document.getElementById("ipList").innerText = text;
+    } catch (e) {
+        document.getElementById("ipList").innerText = "Load failed";
+    }
+}
 
-        // 初始化
-        loadIPs();
-    </script>
+// 测速功能（保留！）
+async function testSpeed(ip) {
+    return new Promise((resolve) => {
+        const start = Date.now();
+        const img = new Image();
+        img.onload = () => resolve(Date.now() - start);
+        img.onerror = () => resolve(9999);
+        img.src = `https://speed.cloudflare.com/__down?bytes=10000&${Math.random()}`;
+        setTimeout(() => resolve(9999), 3000);
+    });
+}
+
+// 初始化
+loadIPs();
+autoUpdateAt310();
+</script>
 </body>
 </html>
