@@ -101,6 +101,11 @@ def send_push(content):
         pass
 
 def main():
+   ip_addresses_str = get_cf_speed_test_ip()
+    if not ip_addresses_str:
+        print("错误: 无法获取优选 IP")
+        return
+    
     # 读取本地IP
     ip_addresses = load_ips_from_local()
     if not ip_addresses:
