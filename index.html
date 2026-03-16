@@ -113,7 +113,7 @@ body {
     gap: 6px;
 }
 
-/* 优化后：IP列更紧凑 */
+/* 紧凑布局：IP列收窄，完美对齐 */
 .table-head, .ip-item {
     display: grid;
     grid-template-columns: 50px 1.2fr 100px 80px 100px;
@@ -167,7 +167,7 @@ body {
     height: 18px;
 }
 
-/* 测速状态 */
+/* 测速状态（上海电信响应时间） */
 .ping-normal { color: var(--success); }
 .ping-warn { color: var(--warning); }
 .ping-fail { color: var(--danger); }
@@ -216,7 +216,7 @@ body {
     transform: translate(-50%, -6px);
 }
 
-/* 手机端同步优化 */
+/* 手机端自适应同步优化 */
 @media (max-width: 480px) {
     .table-head, .ip-item {
         grid-template-columns: 40px 1.2fr 80px 70px 80px;
@@ -235,7 +235,7 @@ body {
 
 <div class="header">
     <h1>🌍 Cloudflare 优选 IP</h1>
-    <p>点击复制 · 自动排序 · 本地延迟测速</p>
+    <p>点击复制 · 自动排序 · 上海电信响应时间</p>
     <button class="theme-switch" id="themeBtn"></button>
 </div>
 
@@ -247,7 +247,7 @@ body {
         <div>IP 地址</div>
         <div>地区</div>
         <div>速度</div>
-        <div>本地延迟</div>
+        <div>上海电信(ms)</div>
     </div>
 
     <div id="ipList" class="ip-list">
@@ -263,8 +263,10 @@ body {
 const IP_FILE = "cloudflare_ips.txt";
 let ipData = [];
 let lastFileContent = "";
+// 固定itdog.cn上海电信测速接口及目标域名
+const TCPING_API = "https://www.itdog.cn/tcping/dns.557553.xyz";
 
-// 深色模式
+// 深色模式开关 + 本地记忆
 const themeBtn = document.getElementById("themeBtn");
 function initTheme() {
     const saved = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -278,7 +280,7 @@ themeBtn.onclick = () => {
 };
 initTheme();
 
-// 加载IP
+// 加载IP列表（从本地txt文件）
 async function loadIPs() {
     const status = document.getElementById("status");
     const container = document.getElementById("ipList");
@@ -286,7 +288,7 @@ async function loadIPs() {
 
     try {
         const res = await fetch(IP_FILE, { cache: "no-store" });
-        if (!res.ok) throw new Error("请求失败");
+        if (!res.ok) throw new Error("IP文件请求失败");
         let text = await res.text();
         text = text.replace(/:443/g, "").trim();
 
@@ -322,10 +324,11 @@ async function loadIPs() {
     } catch (e) {
         container.innerHTML = `<div class="loading">❌ 加载失败</div>`;
         status.textContent = "❌ 更新失败";
+        console.error("IP加载失败：", e);
     }
 }
 
-// 渲染列表
+// 渲染IP列表
 function renderList() {
     const container = document.getElementById("ipList");
     container.innerHTML = "";
@@ -347,69 +350,69 @@ function renderList() {
             <span class="ping-text" id="ping-${index}">-</span>
         `;
 
-        // 单击复制 / 双击测速
+        // 单击复制IP / 双击获取上海电信响应时间
         div.onclick = () => {
             navigator.clipboard.writeText(item.ip).then(() => showToast());
         };
         div.ondblclick = () => {
-            testPing(item.ip, index);
-            showToast(`🔍 正在测试 ${item.ip} 延迟...`);
+            getShTelecomDelay(item.ip, index);
+            showToast(`🔍 正在获取${item.ip}上海电信响应时间...`);
         };
         container.appendChild(div);
     });
 }
 
-// ====================== 修复版：本地延迟测速 ======================
-async function testPing(ip, index) {
+// ====================== 核心：获取IP对应上海电信响应时间 ======================
+async function getShTelecomDelay(ip, index) {
     const el = document.getElementById(`ping-${index}`);
-    el.textContent = "测试中...";
+    el.textContent = "查询中...";
     el.className = "ping-text";
 
-    let times = [];
-    const timeout = 3000; // 延长超时到3秒
+    try {
+        // 方式1：通过tcping接口查询指定IP的上海电信节点响应时间
+        const res = await fetch(`${TCPING_API}?ip=${ip}&node=shanghai-telecom`, {
+            method: "GET",
+            cache: "no-store",
+            headers: {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+            }
+        });
 
-    for (let i = 0; i < 3; i++) {
-        const start = performance.now();
-        try {
-            await new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = resolve;
-                img.onerror = resolve; // 跨域报错也算连通成功
-                img.onabort = reject;
-                img.src = `https://${ip}/favicon.ico?t=${Date.now()}`;
-                setTimeout(() => reject(new Error("timeout")), timeout);
-            });
-            const ms = Math.round(performance.now() - start);
-            times.push(ms);
-        } catch (e) {
-            times.push(9999);
+        if (!res.ok) throw new Error("接口请求失败");
+        const html = await res.text();
+        
+        // 解析页面中上海电信节点的响应时间（匹配最新/平均ms）
+        const shTelecomReg = /电信\s+上海.*?(\d+)ms/gi;
+        const matches = [...html.matchAll(shTelecomReg)];
+        
+        if (matches.length > 0) {
+            // 取第一个匹配的响应时间（最新ms）
+            const delay = matches[0][1];
+            el.textContent = `${delay} ms`;
+            // 根据延迟分级上色
+            if (delay < 50) el.className = "ping-text ping-normal";
+            else if (delay < 100) el.className = "ping-text ping-warn";
+            else el.className = "ping-text ping-fail";
+        } else {
+            el.textContent = "无数据";
+            el.className = "ping-text ping-fail";
         }
-        await new Promise(r => setTimeout(r, 300));
-    }
-
-    const valid = times.filter(t => t < 9999);
-    if (valid.length === 0) {
-        el.textContent = "超时";
+    } catch (e) {
+        el.textContent = "查询失败";
         el.className = "ping-text ping-fail";
-        return;
+        console.error(`IP${ip}查询失败：`, e);
     }
-
-    const avg = Math.round(valid.reduce((a, b) => a + b, 0) / valid.length);
-    el.textContent = `${avg} ms`;
-
-    if (avg < 200) el.className = "ping-text ping-normal";
-    else if (avg < 400) el.className = "ping-text ping-warn";
-    else el.className = "ping-text ping-fail";
 }
 
-// 复制全部
+// 一键复制全部IP
 function copyAll() {
     if (ipData.length === 0) return showToast("❌ 无数据可复制");
     const text = ipData.map(i => `${i.ip}#${i.area}-${i.speed}`).join("\n");
     navigator.clipboard.writeText(text).then(() => showToast("✅ 全部复制成功"));
 }
 
-// 提示
+// 提示框显示
 function showToast(msg = "✅ IP 复制成功") {
     const t = document.getElementById("toast");
     t.textContent = msg;
@@ -417,8 +420,9 @@ function showToast(msg = "✅ IP 复制成功") {
     setTimeout(() => t.classList.remove("show"), 1800);
 }
 
-// 自动刷新
+// 自动刷新IP列表（60秒一次）
 setInterval(loadIPs, 60000);
+// 初始化加载
 loadIPs();
 </script>
 </body>
