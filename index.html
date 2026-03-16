@@ -105,17 +105,10 @@ body {
 .ip-item:active {
     transform: scale(0.985);
 }
-.ip-item.top1 {
-    border: 1px solid #f59e0b;
-    background: rgba(245, 158, 11, 0.08);
-}
-.ip-item.top2 {
-    border: 1px solid #6366f1;
-    background: rgba(99, 102, 241, 0.08);
-}
 .star {
-    color: #f59e0b;
-    font-weight: bold;
+    color: #f59e0b !important;
+    font-weight: bold !important;
+    font-size: 16px !important;
 }
 .btn {
     padding: 14px 20px;
@@ -190,7 +183,6 @@ const IP_FILE = "cloudflare_ips.txt";
 let ipData = [];
 let lastFileContent = "";
 
-// 主加载函数
 async function loadIPs() {
     const status = document.getElementById("status");
     const container = document.getElementById("ipList");
@@ -201,9 +193,7 @@ async function loadIPs() {
         let text = await res.text();
         text = text.replace(/:443/g, "").trim();
         
-        // 检测文件是否更新
         if (lastFileContent && lastFileContent !== text) {
-            console.log("检测到文件更新，自动刷新数据");
             location.reload();
             return;
         }
@@ -233,7 +223,6 @@ async function loadIPs() {
     }
 }
 
-// 渲染列表
 function renderList() {
     const container = document.getElementById("ipList");
     container.innerHTML = "";
@@ -241,18 +230,15 @@ function renderList() {
     ipData.forEach((item, index) => {
         const div = document.createElement("div");
         div.className = "ip-item";
-        
-        let ipText = item.ip;
-        if (index === 0) {
-            div.classList.add("top1");
-            ipText = `<span class="star">★</span> ${ipText}`;
-        } else if (index === 1) {
-            div.classList.add("top2");
-            ipText = `<span class="star">★</span> ${ipText}`;
+
+        // ========== 修复：前2名强制显示金色星星 ==========
+        let ipShow = item.ip;
+        if (index === 0 || index === 1) {
+            ipShow = `<span class="star">★</span> ${ipShow}`;
         }
 
         div.innerHTML = `
-            <span>${ipText}</span>
+            <span>${ipShow}</span>
             <span>${item.area}</span>
             <span>${item.speed}</span>
         `;
@@ -264,13 +250,11 @@ function renderList() {
     });
 }
 
-// 一键复制
 function copyAll() {
     const text = ipData.map(i => `${i.ip}#${i.area}-${i.speed}`).join("\n");
     navigator.clipboard.writeText(text).then(() => showToast("✅ 全部复制成功"));
 }
 
-// 提示
 function showToast(msg = "✅ IP 复制成功") {
     const t = document.getElementById("toast");
     t.textContent = msg;
@@ -278,14 +262,10 @@ function showToast(msg = "✅ IP 复制成功") {
     setTimeout(() => t.classList.remove("show"), 1300);
 }
 
-// 自动检测文件更新（每10秒检查一次）
 function autoCheckUpdate() {
-    setInterval(() => {
-        loadIPs();
-    }, 10000);
+    setInterval(() => loadIPs(), 10000);
 }
 
-// 启动
 loadIPs();
 autoCheckUpdate();
 </script>
