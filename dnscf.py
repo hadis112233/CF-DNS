@@ -100,12 +100,7 @@ def send_push(content):
     except:
         pass
 
-def main():
-    ip_addresses_str = get_cf_speed_test_ip()
-    if not ip_addresses_str:
-        print("错误: 无法获取优选 IP")
-        return
-    
+def main():  
     # 读取本地IP
     ip_addresses = load_ips_from_local()
     if not ip_addresses:
@@ -121,17 +116,15 @@ def main():
         return
 
     # ======================
-    # 你要的 记录数量检查 已加上
+    # 只取第一个 IP 进行更新
     # ======================
-    if len(ip_addresses) > len(dns_records):
-        print(f"警告: IP 数量({len(ip_addresses)})超过 DNS 记录数量({len(dns_records)})，只更新前 {len(dns_records)} 个")
-        ip_addresses = ip_addresses[:len(dns_records)]
+    first_ip = ip_addresses[0]
+    print(f"🔹 即将更新第一个IP：{first_ip}")
 
-    # 开始更新
+    # 只更新第一条 DNS 记录
     push_content = []
-    for index, ip_address in enumerate(ip_addresses):
-        result = update_dns_record(dns_records[index], CF_DNS_NAME, ip_address)
-        push_content.append(result)
+    result = update_dns_record(dns_records[0], CF_DNS_NAME, first_ip)
+    push_content.append(result)
 
     send_push("\n".join(push_content))
     print("✅ 执行完成")
