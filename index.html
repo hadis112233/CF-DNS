@@ -19,7 +19,7 @@
     --gray: #64748b;
     --primary: #4f46e5;
     --success: #10b981;
-    --danger: #ef4444;
+    --hover: #f1f5f9;
 }
 @media (prefers-color-scheme: dark) {
     :root {
@@ -27,95 +27,129 @@
         --card: #1e293b;
         --text: #f1f5f9;
         --gray: #94a3b8;
+        --hover: #273449;
     }
 }
 body {
     background: var(--bg);
     color: var(--text);
-    padding: 30px 20px;
+    padding: 40px 20px;
     max-width: 1000px;
     margin: 0 auto;
+    line-height: 1.5;
 }
 .header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 36px;
 }
 .header h1 {
-    font-size: 26px;
-    margin-bottom: 8px;
-    color: var(--text);
+    font-size: 30px;
+    margin-bottom: 10px;
+    font-weight: 700;
 }
 .header p {
     color: var(--gray);
-    font-size: 14px;
+    font-size: 15px;
 }
 .card {
     background: var(--card);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    margin-bottom: 20px;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+    margin-bottom: 25px;
 }
-
-/* 三列布局 */
-.ip-table {
-    margin-top: 16px;
+.status {
+    font-size: 14px;
+    color: var(--gray);
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--hover);
+}
+.table-head {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
+    grid-template-columns: 1.2fr 1fr 0.8fr;
+    gap: 12px;
+    font-weight: 600;
+    color: var(--primary);
+    padding: 0 10px 12px;
     font-size: 14px;
 }
-.table-header {
-    font-weight: bold;
-    color: var(--primary);
-    padding: 10px 0;
-    text-align: center;
-    background: var(--bg);
-    border-radius: 8px;
+.ip-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 5px;
+    margin-bottom: 24px;
 }
-.ip-row {
-    display: contents;
-}
-.ip-row span {
+.ip-item {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 0.8fr;
+    gap: 12px;
+    align-items: center;
+    padding: 14px 16px;
     background: var(--bg);
-    padding: 10px;
-    border-radius: 8px;
-    text-align: center;
+    border-radius: 12px;
     font-family: monospace;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    text-align: center;
 }
-.speed {
-    font-size: 13px;
-    font-weight: 500;
+.ip-item:hover {
+    background: var(--hover);
+    transform: translateY(-1px);
 }
-.speed.fast {
-    color: var(--success);
+.ip-item:active {
+    transform: scale(0.985);
 }
-.speed.slow {
-    color: var(--danger);
+.btns {
+    display: flex;
+    gap: 12px;
 }
 .btn {
-    padding: 10px 18px;
-    border-radius: 10px;
+    flex: 1;
+    padding: 14px 20px;
+    border-radius: 14px;
     border: none;
     background: var(--primary);
     color: white;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 15px;
     cursor: pointer;
-    margin-top: 16px;
-    transition: 0.2s;
+    transition: all 0.2s;
 }
 .btn:hover {
     opacity: 0.9;
-}
-.status {
-    font-size: 13px;
-    color: var(--gray);
-    margin-top: 10px;
+    transform: translateY(-1px);
 }
 .loading {
     text-align: center;
-    padding: 30px 0;
+    padding: 50px 0;
     color: var(--gray);
+    font-size: 15px;
+}
+::-webkit-scrollbar {width: 6px;}
+::-webkit-scrollbar-thumb {background: var(--gray); border-radius: 10px;}
+.toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--success);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+.toast.show {
+    opacity: 1;
 }
 </style>
 </head>
@@ -123,32 +157,35 @@ body {
 
 <div class="header">
     <h1>🌍 Cloudflare 优选 IP 列表</h1>
-    <p>IP地址 | 地区 | 速度 三列展示</p>
+    <p>点击IP即可复制 · 干净美观</p>
 </div>
 
 <div class="card">
     <div id="status" class="status">⏳ 加载中...</div>
-    
-    <div class="ip-table" id="tableHead">
-        <div class="table-header">IP 地址</div>
-        <div class="table-header">地区</div>
-        <div class="table-header">速度</div>
+
+    <div class="table-head">
+        <div>IP 地址</div>
+        <div>地区</div>
+        <div>速度</div>
     </div>
 
-    <div id="ipList" class="loading">正在获取最新 IP...</div>
-    
-    <button class="btn" onclick="copyAll()">📋 一键复制全部内容</button>
+    <div id="ipList" class="ip-list">
+        <div class="loading">正在获取最新 IP 数据...</div>
+    </div>
+
+    <button class="btn" onclick="copyAll()">📋 一键复制全部</button>
 </div>
+
+<div id="toast" class="toast">✅ IP 复制成功</div>
 
 <script>
 const IP_FILE = "https://raw.githubusercontent.com/hadis112233/CF-DNS/main/cloudflare_ips.txt";
 let ipData = [];
 
-// 加载文件
 async function loadIPs() {
     const status = document.getElementById("status");
     const container = document.getElementById("ipList");
-    status.innerText = "🔄 更新中...";
+    status.textContent = "🔄 更新中...";
 
     try {
         const res = await fetch(IP_FILE, { cache: "no-store" });
@@ -160,56 +197,50 @@ async function loadIPs() {
             const parts = line.trim().split(/\s+/);
             return {
                 ip: parts[0] || "",
-                area: parts[1] || "",
-                speed: parts[2] || ""
+                area: parts[1] || "-",
+                speed: parts[2] || "-"
             };
         });
 
-        renderTable();
-        status.innerText = `✅ 最后更新：${new Date().toLocaleString()}`;
+        renderList();
+        status.textContent = `✅ 最后更新：${new Date().toLocaleString()}`;
     } catch (e) {
         container.innerHTML = `<div class="loading">❌ 加载失败</div>`;
-        status.innerText = "❌ 更新失败";
+        status.textContent = "❌ 更新失败";
     }
 }
 
-// 渲染三列
-function renderTable() {
+function renderList() {
     const container = document.getElementById("ipList");
-    container.style.display = "grid";
-    container.style.gridTemplateColumns = "1fr 1fr 1fr";
-    container.style.gap = "8px";
     container.innerHTML = "";
 
     ipData.forEach(item => {
-        const ip = document.createElement("span");
-        ip.textContent = item.ip;
+        const div = document.createElement("div");
+        div.className = "ip-item";
+        
+        div.innerHTML = `
+            <span>${item.ip}</span>
+            <span>${item.area}</span>
+            <span>${item.speed}</span>
+        `;
 
-        const area = document.createElement("span");
-        area.textContent = item.area;
-
-        const speed = document.createElement("span");
-        speed.className = "speed";
-        speed.textContent = item.speed;
-
-        const ms = parseInt(item.speed);
-        if (!isNaN(ms)) {
-            if (ms < 200) speed.classList.add("fast");
-            else speed.classList.add("slow");
-        }
-
-        container.appendChild(ip);
-        container.appendChild(area);
-        container.appendChild(speed);
+        div.onclick = () => {
+            navigator.clipboard.writeText(item.ip).then(() => showToast());
+        };
+        container.appendChild(div);
     });
 }
 
-// 一键复制
 function copyAll() {
     const text = ipData.map(i => `${i.ip} ${i.area} ${i.speed}`).join("\n");
-    navigator.clipboard.writeText(text).then(() => {
-        alert("✅ 复制成功！");
-    });
+    navigator.clipboard.writeText(text).then(() => showToast("✅ 全部复制成功"));
+}
+
+function showToast(msg = "✅ IP 复制成功") {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 1300);
 }
 
 loadIPs();
