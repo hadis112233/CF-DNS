@@ -113,10 +113,10 @@ body {
     gap: 6px;
 }
 
-/* 表格布局（完美对齐） */
+/* 优化后：IP列更紧凑 */
 .table-head, .ip-item {
     display: grid;
-    grid-template-columns: 50px 1fr 100px 80px 100px;
+    grid-template-columns: 50px 1.2fr 100px 80px 100px;
     gap: 16px;
     align-items: center;
     padding: 0 16px;
@@ -149,7 +149,6 @@ body {
     transition: all 0.25s ease;
     user-select: none;
     white-space: nowrap;
-    position: relative;
 }
 .ip-item:hover {
     background: var(--hover);
@@ -217,10 +216,10 @@ body {
     transform: translate(-50%, -6px);
 }
 
-/* 手机端 */
+/* 手机端同步优化 */
 @media (max-width: 480px) {
     .table-head, .ip-item {
-        grid-template-columns: 40px 1fr 80px 70px 80px;
+        grid-template-columns: 40px 1.2fr 80px 70px 80px;
         gap: 8px;
         padding: 0 12px;
     }
@@ -360,27 +359,32 @@ function renderList() {
     });
 }
 
-// ====================== 本地延迟测速核心 ======================
+// ====================== 修复版：本地延迟测速 ======================
 async function testPing(ip, index) {
     const el = document.getElementById(`ping-${index}`);
     el.textContent = "测试中...";
     el.className = "ping-text";
 
     let times = [];
-    const timeout = 2000;
+    const timeout = 3000; // 延长超时到3秒
 
     for (let i = 0; i < 3; i++) {
         const start = performance.now();
         try {
-            await fetch(`https://${ip}/cdn-cgi/trace`, {
-                mode: "no-cors",
-                cache: "no-store",
-                signal: AbortSignal.timeout(timeout)
+            await new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = resolve;
+                img.onerror = resolve; // 跨域报错也算连通成功
+                img.onabort = reject;
+                img.src = `https://${ip}/favicon.ico?t=${Date.now()}`;
+                setTimeout(() => reject(new Error("timeout")), timeout);
             });
             const ms = Math.round(performance.now() - start);
             times.push(ms);
-        } catch (e) { times.push(9999); }
-        await new Promise(r => setTimeout(r, 200));
+        } catch (e) {
+            times.push(9999);
+        }
+        await new Promise(r => setTimeout(r, 300));
     }
 
     const valid = times.filter(t => t < 9999);
@@ -393,8 +397,8 @@ async function testPing(ip, index) {
     const avg = Math.round(valid.reduce((a, b) => a + b, 0) / valid.length);
     el.textContent = `${avg} ms`;
 
-    if (avg < 150) el.className = "ping-text ping-normal";
-    else if (avg < 300) el.className = "ping-text ping-warn";
+    if (avg < 200) el.className = "ping-text ping-normal";
+    else if (avg < 400) el.className = "ping-text ping-warn";
     else el.className = "ping-text ping-fail";
 }
 
