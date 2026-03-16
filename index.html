@@ -20,6 +20,8 @@
     --primary: #4f46e5;
     --success: #10b981;
     --hover: #f1f5f9;
+    --border: #e2e8f0;
+    --shadow: 0 12px 40px rgba(0,0,0,0.08);
 }
 @media (prefers-color-scheme: dark) {
     :root {
@@ -28,132 +30,169 @@
         --text: #f1f5f9;
         --gray: #94a3b8;
         --hover: #273449;
+        --border: #334155;
+        --shadow: 0 12px 40px rgba(0,0,0,0.2);
     }
 }
 body {
     background: var(--bg);
     color: var(--text);
-    padding: 40px 20px;
+    padding: 50px 20px;
     max-width: 1000px;
     margin: 0 auto;
-    line-height: 1.5;
+    line-height: 1.6;
+    min-height: 100vh;
 }
+/* 头部美化 */
 .header {
     text-align: center;
-    margin-bottom: 36px;
+    margin-bottom: 40px;
+    animation: fadeIn 0.6s ease forwards;
 }
 .header h1 {
-    font-size: 30px;
-    margin-bottom: 10px;
-    font-weight: 700;
+    font-size: 34px;
+    margin-bottom: 12px;
+    font-weight: 800;
+    background: linear-gradient(90deg, #4f46e5, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 .header p {
     color: var(--gray);
-    font-size: 15px;
+    font-size: 16px;
+    opacity: 0.9;
 }
+/* 卡片美化 */
 .card {
     background: var(--card);
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.06);
-    margin-bottom: 25px;
+    border-radius: 24px;
+    padding: 36px;
+    box-shadow: var(--shadow);
+    margin-bottom: 30px;
+    border: 1px solid var(--border);
+    animation: fadeIn 0.7s ease forwards;
 }
 .status {
     font-size: 14px;
     color: var(--gray);
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--hover);
+    margin-bottom: 24px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
-.table-head {
+/* 统一网格布局（修复对齐核心） */
+.table-head, .ip-item {
     display: grid;
-    grid-template-columns: 24px 1fr 1fr 0.8fr;
-    gap: 12px;
+    grid-template-columns: 36px 1.2fr 1fr 0.8fr;
+    gap: 16px;
+    align-items: center;
+    padding: 0 12px;
+}
+/* 表格头部 */
+.table-head {
     font-weight: 600;
     color: var(--primary);
-    padding: 0 10px 12px;
+    padding-bottom: 16px;
     font-size: 14px;
+    letter-spacing: 0.3px;
 }
+/* IP 列表 */
 .ip-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    max-height: 520px;
+    gap: 10px;
+    max-height: 560px;
     overflow-y: auto;
-    padding-right: 5px;
-    margin-bottom: 24px;
+    padding-right: 8px;
+    margin-bottom: 28px;
 }
 .ip-item {
-    display: grid;
-    grid-template-columns: 24px 1fr 1fr 0.8fr;
-    gap: 12px;
-    align-items: center;
-    padding: 14px 16px;
+    padding: 16px 20px;
     background: var(--bg);
-    border-radius: 12px;
-    font-family: monospace;
+    border-radius: 16px;
+    font-family: 'SF Mono', Monaco, monospace;
     font-size: 15px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     user-select: none;
-    text-align: left;
+    border: 1px solid transparent;
 }
 .ip-item:hover {
     background: var(--hover);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    border-color: var(--primary);
+    box-shadow: 0 6px 16px rgba(79,70,229,0.1);
 }
 .ip-item:active {
-    transform: scale(0.985);
+    transform: scale(0.98);
 }
+/* 星级 */
 .star {
     color: #f59e0b;
     font-weight: bold;
-    font-size: 16px;
+    font-size: 18px;
     text-align: center;
 }
 .empty-star {
-    width: 24px; /* 和星星占位同宽 */
+    width: 36px;
+    height: 20px;
 }
+/* 按钮 */
 .btn {
-    padding: 14px 20px;
-    border-radius: 14px;
+    width: 100%;
+    padding: 18px 24px;
+    border-radius: 16px;
     border: none;
-    background: var(--primary);
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
     color: white;
     font-weight: 600;
-    font-size: 15px;
+    font-size: 16px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.25s ease;
+    box-shadow: 0 6px 20px rgba(79,70,229,0.25);
 }
 .btn:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(79,70,229,0.35);
 }
+/* 加载 */
 .loading {
     text-align: center;
-    padding: 50px 0;
+    padding: 60px 0;
     color: var(--gray);
     font-size: 15px;
 }
+/* 滚动条 */
 ::-webkit-scrollbar {width: 6px;}
+::-webkit-scrollbar-track {background: transparent; border-radius: 10px;}
 ::-webkit-scrollbar-thumb {background: var(--gray); border-radius: 10px;}
+/* 提示框 */
 .toast {
     position: fixed;
-    bottom: 30px;
+    bottom: 40px;
     left: 50%;
     transform: translateX(-50%);
     background: var(--success);
     color: #fff;
-    padding: 10px 18px;
-    border-radius: 10px;
-    font-size: 14px;
+    padding: 14px 24px;
+    border-radius: 14px;
+    font-size: 15px;
     font-weight: 500;
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: none;
+    box-shadow: 0 8px 24px rgba(16,185,129,0.25);
 }
 .toast.show {
     opacity: 1;
+    transform: translate(-50%, -8px);
+}
+/* 淡入动画 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 </style>
 </head>
@@ -168,7 +207,7 @@ body {
     <div id="status" class="status">⏳ 加载中...</div>
 
     <div class="table-head">
-        <div></div> <!-- 星星占位列 -->
+        <div></div>
         <div>IP 地址</div>
         <div>地区</div>
         <div>速度</div>
@@ -264,7 +303,7 @@ function showToast(msg = "✅ IP 复制成功") {
     const t = document.getElementById("toast");
     t.textContent = msg;
     t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 1300);
+    setTimeout(() => t.classList.remove("show"), 1500);
 }
 
 function autoCheckUpdate() {
