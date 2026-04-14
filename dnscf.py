@@ -5,10 +5,10 @@ import os
 import re
 import requests
 
-# ========== 1. 配置（确保环境变量已设置） ==========
+# ========== 1. 配置（请确保环境变量已设置） ==========
 CF_API_TOKEN = os.environ.get("CF_API_TOKEN")
 CF_ZONE_ID = os.environ.get("CF_ZONE_ID")
-CF_DNS_NAME = os.environ.get("CF_DNS_NAME")
+CF_DNS_NAME = os.environ.get("CF_DNS_NAME") # 要更新的域名，如 dns.example.com
 PUSHPLUS_TOKEN = os.environ.get("PUSHPLUS_TOKEN")
 
 IP_FILE = "cloudflare_ips.txt"
@@ -17,97 +17,98 @@ HEADERS = {
     'Content-Type': 'application/json'
 }
 
-def get_first_line_ip():
+def get_best_ip_from_file():
     """
-    严格按照行顺序读取，获取文件中出现的第一个 IP 后立即返回
+    直接从文件第一行提取速度最快的 IP
     """
     if not os.path.exists(IP_FILE):
-        print(f"❌ 错误：找不到文件 {IP_FILE}")
+        print(f"❌ 找不到文件: {IP_FILE}")
         return None
 
-    # 匹配 IP 的正则表达式
+    # 匹配 IP 的正则
     ip_pattern = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
 
     try:
         with open(IP_FILE, "r", encoding="utf-8") as f:
-            for line_num, line in enumerate(f, 1):
+            for line in f:
                 line = line.strip()
-                if not line:
-                    continue
+                if not line: continue
                 
+                # 提取 IP 和 备注信息（用于推送显示）
                 match = ip_pattern.search(line)
                 if match:
-                    found_ip = match.group(1)
-                    print(f"📍 在第 {line_num} 行锁定目标 IP: {found_ip}")
-                    return found_ip # 核心：一旦找到第一个 IP，立即结束函数并返回
+                    best_ip = match.group(1)
+                    # 尝试提取速度信息，例如 "51.18MB/s"
+                    speed_match = re.search(r'(\d+\.?\d*MB/s)', line)
+                    speed = speed_match.group(1) if speed_match else "未知"
+                    return best_ip, speed
     except Exception as e:
-        print(f"❌ 读取文件异常: {e}")
+        print(f"❌ 读取文件失败: {e}")
     return None
 
-def update_cloudflare_dns(new_ip):
+def update_dns_and_push(ip, speed):
     """
-    更新 Cloudflare 记录
+    更新 Cloudflare DNS 并通过 PushPlus 推送
     """
-    # 1. 获取 DNS 记录 ID
-    list_url = f"https://api.cloudflare.com/client/v4/zones/{CF_ZONE_ID}/dns_records"
+    # 1. 获取 Cloudflare 记录
+    url = f"https://api.cloudflare.com/client/v4/zones/{CF_ZONE_ID}/dns_records"
     try:
-        res = requests.get(list_url, headers=HEADERS, timeout=10).json()
-        if not res.get("success"):
-            print("❌ 获取记录失败，请检查 TOKEN 和 ZONE_ID")
-            return
-
-        # 筛选出名字匹配且类型为 A 的记录
+        res = requests.get(url, headers=HEADERS, timeout=10).json()
         records = [r for r in res.get("result", []) if r['name'] == CF_DNS_NAME and r['type'] == 'A']
         
         if not records:
             print(f"❌ 未找到域名 {CF_DNS_NAME} 的 A 记录")
             return
 
-        # 2. 逐个更新（防止有多条记录导致显示不一致）
-        for rec in records:
-            if rec['content'] == new_ip:
-                print(f"✅ 记录 {rec['id'][:6]} 已是最新 IP，跳过更新")
-                continue
+        target_record = records[0]
+        
+        # 2. 如果 IP 没变，不重复更新但可以选是否推送
+        if target_record['content'] == ip:
+            print(f"✅ 当前 DNS 已经是最高速 IP ({ip})，跳过更新")
+            return
 
-            update_url = f"{list_url}/{rec['id']}"
-            data = {
-                "type": "A",
-                "name": CF_DNS_NAME,
-                "content": new_ip,
-                "ttl": 60,
-                "proxied": False
-            }
-            put_res = requests.put(update_url, headers=HEADERS, json=data, timeout=10).json()
-            
-            if put_res.get("success"):
-                print(f"🚀 成功更新记录: {new_ip}")
-                send_push(f"✅ DNS 更新成功\n域名: {CF_DNS_NAME}\n新 IP: {new_ip}")
-            else:
-                print(f"❌ 更新失败: {put_res.get('errors')}")
+        # 3. 执行更新
+        update_url = f"{url}/{target_record['id']}"
+        data = {
+            "type": "A",
+            "name": CF_DNS_NAME,
+            "content": ip,
+            "ttl": 60,
+            "proxied": False
+        }
+        update_res = requests.put(update_url, headers=HEADERS, json=data, timeout=10).json()
+        
+        if update_res.get("success"):
+            msg = f"🚀 **Cloudflare 优选 IP 更新成功**\n\n" \
+                  f"- **域名**: `{CF_DNS_NAME}`\n" \
+                  f"- **最快 IP**: `{ip}`\n" \
+                  f"- **下载速度**: `{speed}`\n" \
+                  f"- **状态**: 已自动切换至最快节点"
+            print(f"✅ 更新成功: {ip} ({speed})")
+            send_push(msg)
+        else:
+            print(f"❌ 更新失败: {update_res}")
 
     except Exception as e:
-        print(f"❌ 网络请求异常: {e}")
+        print(f"❌ 网络异常: {e}")
 
 def send_push(content):
     if not PUSHPLUS_TOKEN: return
-    try:
-        requests.post("http://www.pushplus.plus/send", json={
-            "token": PUSHPLUS_TOKEN,
-            "title": "Cloudflare DDNS 结果",
-            "content": content,
-            "template": "markdown"
-        }, timeout=5)
-    except:
-        pass
+    requests.post("http://www.pushplus.plus/send", json={
+        "token": PUSHPLUS_TOKEN,
+        "title": "Cloudflare 速度最快节点推送",
+        "content": content,
+        "template": "markdown"
+    })
 
 def main():
-    # 只要第一行的 IP
-    target_ip = get_first_line_ip()
-    
-    if target_ip:
-        update_cloudflare_dns(target_ip)
+    result = get_best_ip_from_file()
+    if result:
+        ip, speed = result
+        print(f"📍 检测到最快节点: {ip}, 速度: {speed}")
+        update_dns_and_push(ip, speed)
     else:
-        print("❌ 未能从文件中提取到 IP 地址")
+        print("❌ 未能从文件中提取到 IP")
 
 if __name__ == "__main__":
     main()
