@@ -11,7 +11,9 @@ on:
   schedule:
     - cron: '0 */6 * * *'     # 保留每6小时一次
   workflow_dispatch:          # 保留手动运行
-
+concurrency:
+  group: dns-cf-push
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest
